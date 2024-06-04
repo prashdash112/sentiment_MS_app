@@ -27,7 +27,9 @@ from textblob import TextBlob
 def get_api_response_requests(url):
     '''
     Function to accept a url and returns a response in JSON format
-
+    
+    url: String
+    returns: JSON 
     '''
 
     try:
@@ -49,6 +51,14 @@ def get_api_response_requests(url):
         return None
 
 def analyze_sentiment(text):
+
+    '''
+    
+    Function to analyze the sentiment of the text using textblob library
+    text: String 
+    returns: float, string
+
+    '''
     # Create a textblob object
     blob = TextBlob(text)
     
@@ -67,33 +77,25 @@ def analyze_sentiment(text):
 
 # URLs
 url_subfeddit_names = "http://localhost:8080/api/v1/subfeddits/?skip=0&limit=10"
-url_subfeddit_comments = "http://localhost:8080/api/v1/comments/?subfeddit_id=3&skip=0&limit=10"
+url_subfeddit_comments = "http://localhost:8080/api/v1/comments/?subfeddit_id=1&skip=0&limit=10"
 
 
 response_subfeddit_names = get_api_response_requests(url_subfeddit_names)
 response_subfeddit_comments = get_api_response_requests(url_subfeddit_comments)
-# print(response_subfeddit_names)
-# print('\n')
-# print(response_subfeddit_comments)
 
 # Access the list of subfeddits
 subfeddits = response_subfeddit_names['subfeddits']
 # Extract usernames and ids using list comprehension
 usernames = [subfeddit['username'] for subfeddit in subfeddits]
 ids = [subfeddit['id'] for subfeddit in subfeddits] 
-# Print the extracted usernames
-print(usernames)
-print(ids)
 
 # Sort the 'comments' list to extract the recent comments 
 response_subfeddit_comments['comments'].sort(key=lambda comment: comment['created_at'], reverse=True)
-print('\n')
 #print(response_subfeddit_comments)
 comments  = response_subfeddit_comments['comments'] 
 recent_comment_text = [comment_text['text'] for comment_text in comments]
 recent_comment_id = [comment_id['id'] for comment_id in comments]
 
-comment  = recent_comment_text[0]
 polarity_scores = []
 sentiment_vals = []
 for comment in recent_comment_text:
@@ -110,6 +112,12 @@ for comment, comment_id, polarity_score, sentiment_val in zip(recent_comment_tex
                  "sentiment_class": sentiment_val
                 }
     final_results.append(vals_dict)
+
+
+# Print the extracted usernames
+print(usernames)
+print(ids)
+print('\n')
 
 print(recent_comment_text)           
 print("Final Results:\n\n", final_results) 
