@@ -154,7 +154,7 @@ def polarity_scores(subfeddit):
             print("Dates string:",start_date_str,end_date_str)
             final_results = [item for item in final_results if start_date_str <= item['date'] <= end_date_str]
         except ValueError:
-            return jsonify({'error': 'Invalid date_range format. Use DDMMYYYY,DDMMYYYY format to enter the date range'}), 400
+            return jsonify({'error': 'Invalid date_range format. Use YYYYMMDD,YYYYMMDD format to enter the date range'}), 400
         
     if limit: 
         final_results = final_results[:int(limit)]
