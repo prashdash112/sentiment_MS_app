@@ -131,8 +131,6 @@ def polarity_scores(subfeddit):
     created_at_comment = [comment_created['created_at'] for comment_created in comments]
     formatted_date = [convert_timestamp_to_text(timestamp) for timestamp in created_at_comment]
 
-    print("Formatted date:",formatted_date)
-
     polarity_scores = []
     sentiment_vals = []
     for comment in recent_comment_text:
