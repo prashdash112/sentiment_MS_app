@@ -23,11 +23,10 @@ Define a GitHub workflow to run linting checks and tests for the built RESTful A
 # Author: Prashant Singh
 # Date: 5th June, 2024
 
+import datetime
 import requests
 from textblob import TextBlob
 from flask import Flask, request, jsonify
-import datetime
-
 
 app = Flask(__name__)
 
@@ -35,15 +34,17 @@ app = Flask(__name__)
 def get_api_response_requests(url):
 
     '''
+    
     Function to accept a url and returns a response in JSON format
     
-    Input: url String
-    returns: JSON
+    Args: url (str)
+    
+    Returns: JSON object
 
     '''
 
     try:
-        response = requests.get(url)
+        response = requests.get(url,timeout=20)
         # Raise an HTTPError for bad responses
         response.raise_for_status()
         # Parse the response as JSON
@@ -53,7 +54,8 @@ def get_api_response_requests(url):
 
     except requests.exceptions.HTTPError as http_err:
         print(f"HTTP error occurred: {http_err}")
-
+        return None
+    
     except Exception as err:
         print(f"An error occurred: {err}")
         return None
@@ -63,8 +65,10 @@ def analyze_sentiment(text):
     '''
 
     Function to analyze the sentiment of the text using textblob library
-    Input: String 
-    returns: float, string
+
+    Args: text (str) 
+    
+    Returns: float, string
 
     '''
 
@@ -90,8 +94,10 @@ def convert_timestamp_to_text(timestamp):
     '''
     
     Function converts a unix timestamp into a datetime object with format: YYYY-MM-DD
-    Input: Timestamp object
-    Output: Timestamp object
+    
+    Args: Timestamp object
+    
+    Returns: Timestamp object
 
     '''
 
@@ -110,8 +116,32 @@ usernames = [subfeddit['username'] for subfeddit in subfeddits]
 ids = {subfeddit["username"]:subfeddit['id'] for subfeddit in subfeddits }
 
 
-@app.route("/polarity/<subfeddit>",methods=(['GET']))
+@app.route("/polarity/<subfeddit>",methods=['GET'])
 def polarity_scores(subfeddit):
+
+    '''
+
+    Retrieve and analyze the sentiment of comments from a specified subfeddit.
+
+    This endpoint fetches comments from a subfeddit, analyzes their sentiment,
+    and returns the comments along with their sentiment scores and metadata.
+
+    Args:
+        subfeddit (str): The identifier of the subfeddit to analyze.
+
+    Query Parameters:
+        sort (str, optional): The order to sort the results by polarity score. 
+                              Use any number for ascending and 'desc' for descending.
+
+        limit (int, optional): The maximum number of comments to return.
+
+        date_range (str, optional): The date range to filter comments in the format 'YYYYMMDD,YYYYMMDD'.
+
+    Returns:
+        Response: A JSON response containing a list of comments with their UID, text, polarity score,
+                  sentiment classification, and creation date.
+    
+    '''
 
     # URL
     url_subfeddit_comments = f"http://localhost:8080/api/v1/comments/?subfeddit_id={ids[subfeddit]}&skip=0&limit=22000"
@@ -122,7 +152,7 @@ def polarity_scores(subfeddit):
     limit = request.args.get("limit")
     date_range = request.args.get('date_range', '')
 
-    # Sort the 'comments' list to extract the recent comments 
+    # Sort the 'comments' list to extract the recent comments
     response_subfeddit_comments['comments'].sort(key=lambda comment: comment['created_at'], reverse=True)
 
     comments  = response_subfeddit_comments['comments']
@@ -155,14 +185,14 @@ def polarity_scores(subfeddit):
             print("Dates string:",start_date_str,end_date_str)
             final_results = [item for item in final_results if start_date_str <= item['date'] <= end_date_str]
         except ValueError:
-            return jsonify({'error': 'Invalid date_range format. Use YYYYMMDD,YYYYMMDD format to enter the date range'}), 400
+            return jsonify({'error': 'Invalid date_range format. Use YYYYMMDD,YYYYMMDD format'}), 400
 
     if limit:
         final_results = final_results[:int(limit)]
     if sort:
         final_results.sort(key = lambda item: item["polarity_score"], reverse = sort=="desc")
 
-    # Print the extracted ids and final results on terminal 
+    # Print the extracted ids and final results on terminal
     print(ids)
     print('\n')
     print("Final Results:\n\n", final_results)
@@ -171,4 +201,3 @@ def polarity_scores(subfeddit):
 
 if __name__ == "__main__":
     app.run(debug=True)
-
