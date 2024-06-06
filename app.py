@@ -144,8 +144,11 @@ def polarity_scores(subfeddit):
     '''
 
     # URL
-    url_subfeddit_comments = f"http://localhost:8080/api/v1/comments/?subfeddit_id={ids[subfeddit]}&skip=0&limit=22000"
-    response_subfeddit_comments = get_api_response_requests(url_subfeddit_comments)
+    try:
+        url_subfeddit_comments = f"http://localhost:8080/api/v1/comments/?subfeddit_id={ids[subfeddit]}&skip=0&limit=22000"
+        response_subfeddit_comments = get_api_response_requests(url_subfeddit_comments)
+    except KeyError:
+        return jsonify({'Error': 'Invalid subfeddit name. Use either Admin_1,Admin_2 or Admin_3'}), 400
 
     # Creating querry parameters for the comments
     sort = request.args.get("sort")
